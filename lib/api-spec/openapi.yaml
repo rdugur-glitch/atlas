@@ -1,0 +1,413 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+paths:
+  /atlas/account:
+    get:
+      operationId: getAtlasAccount
+      tags: [atlas]
+      responses:
+        "200":
+          description: Authenticated profile and current-browser legacy migration availability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AtlasAccount"
+  /atlas/account/import:
+    post:
+      operationId: importAtlasLegacy
+      tags: [atlas]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AtlasImportInput"
+      responses:
+        "200":
+          description: Atomic legacy migration result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AtlasImportResult"
+  /atlas/state:
+    get:
+      operationId: getAtlasState
+      responses:
+        "200":
+          description: Personal workspace
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AtlasState" }
+  /atlas/items:
+    post:
+      operationId: createAtlasItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ItemInput" }
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AtlasItem" }
+  /atlas/items/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    patch:
+      operationId: updateAtlasItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ItemUpdate" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AtlasItem" }
+    delete:
+      operationId: deleteAtlasItem
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Success" }
+  /atlas/conversations:
+    post:
+      operationId: createConversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConversationInput" }
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Conversation" }
+  /atlas/conversations/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getConversation
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConversationDetail" }
+    delete:
+      operationId: deleteConversation
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Success" }
+  /atlas/conversations/{id}/messages:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: sendMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MessageInput" }
+      responses:
+        "200":
+          description: Real Claude reply
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConversationDetail" }
+        "400":
+          description: Provider or setup error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AtlasError" }
+  /atlas/actions/{id}/apply:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: resolveAtlasAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ActionResolutionInput" }
+      responses:
+        "200":
+          description: Confirmed or dismissed action; retries do not duplicate writes
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActionResolution" }
+        "400":
+          description: Invalid or stale proposal
+        "404":
+          description: Proposal is not in this workspace
+  /atlas/settings:
+    put:
+      operationId: saveAtlasSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SettingsInput" }
+      responses:
+        "200":
+          description: Key is never returned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Settings" }
+    delete:
+      operationId: removeAtlasKey
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Settings" }
+  /atlas/settings/verify:
+    post:
+      operationId: verifyAtlasConnection
+      responses:
+        "200":
+          description: Messages API verified
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Settings" }
+        "400":
+          description: Actual provider error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AtlasError" }
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+components:
+  schemas:
+    AtlasAccount:
+      type: object
+      required: [userId, hasKey, legacy]
+      properties:
+        userId: {type: string}
+        hasKey: {type: boolean}
+        legacy:
+          type: object
+          required: [available, hasKey, connected, items, conversations]
+          properties:
+            available: {type: boolean}
+            hasKey: {type: boolean}
+            connected: {type: boolean}
+            items: {type: integer}
+            conversations: {type: integer}
+    AtlasImportInput:
+      type: object
+      required: [confirm]
+      properties:
+        confirm:
+          type: boolean
+          enum: [true]
+    AtlasImportResult:
+      type: object
+      required: [imported, keyConflict, message]
+      properties:
+        imported: {type: boolean}
+        keyConflict: {type: boolean}
+        message: {type: string}
+    AtlasError:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+        providerMessage: { type: string }
+        code: { type: string }
+        retryAfter: { type: integer }
+    Success:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean }
+    AtlasItem:
+      type: object
+      required: [id, kind, title, content, completed, startsAt, createdAt]
+      properties:
+        domain: { type: string, enum: [personal, crm, finance, ads, social, operations] }
+        id: { type: string }
+        kind: { type: string, enum: [task, event, memory] }
+        title: { type: string }
+        content: { type: string }
+        completed: { type: boolean }
+        startsAt: { type: ["string", "null"] }
+        createdAt: { type: string }
+    ItemInput:
+      type: object
+      required: [kind, title]
+      properties:
+        domain: { type: string, enum: [personal, crm, finance, ads, social, operations] }
+        kind: { type: string, enum: [task, event, memory] }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        content: { type: string, maxLength: 5000 }
+        startsAt: { type: ["string", "null"] }
+    ItemUpdate:
+      type: object
+      properties:
+        domain: { type: string, enum: [personal, crm, finance, ads, social, operations] }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        content: { type: string, maxLength: 5000 }
+        completed: { type: boolean }
+        startsAt: { type: ["string", "null"] }
+    ConversationInput:
+      type: object
+      properties:
+        surface: { type: string, enum: [chat, table] }
+        title: { type: string, maxLength: 200 }
+    Conversation:
+      type: object
+      required: [id, title, createdAt, updatedAt]
+      properties:
+        surface: { type: string, enum: [chat, table] }
+        id: { type: string }
+        title: { type: string }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+    Message:
+      type: object
+      required: [id, role, content, createdAt]
+      properties:
+        assistantId: { $ref: "#/components/schemas/AssistantId" }
+        routedTo:
+          type: array
+          maxItems: 6
+          items: { $ref: "#/components/schemas/AssistantId" }
+        routingReason: { type: string, enum: [address, selection, leader] }
+        id: { type: string }
+        role: { type: string, enum: [user, assistant] }
+        content: { type: string }
+        createdAt: { type: string }
+        truncated: { type: boolean }
+        source: { type: string, enum: [voice, text] }
+        actions:
+          type: array
+          items: { $ref: "#/components/schemas/AssistantAction" }
+    MessageInput:
+      type: object
+      required: [content]
+      properties:
+        surface: { type: string, enum: [chat, table] }
+        assistantIds:
+          type: array
+          minItems: 1
+          maxItems: 6
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/AssistantId" }
+        content: { type: string, minLength: 1, maxLength: 10000 }
+        source: { type: string, enum: [voice, text] }
+        timezone: { type: string, maxLength: 80 }
+    AssistantAction:
+      type: object
+      required: [id, type, label, status]
+      properties:
+        domain: { type: string, enum: [personal, crm, finance, ads, social, operations] }
+        id: { type: string }
+        type: { type: string, enum: [create_task, complete_task, create_event, save_memory, navigate] }
+        label: { type: string, minLength: 1, maxLength: 200 }
+        status: { type: string, enum: [pending, applied, dismissed] }
+        title: { type: string, maxLength: 200 }
+        content: { type: string, maxLength: 10000 }
+        startsAt: { type: string }
+        itemId: { type: string }
+        screen: { type: string, enum: [merkez, sohbetler, gorevler, ajanda, hafiza, ayarlar] }
+    ActionResolutionInput:
+      type: object
+      required: [approve]
+      properties:
+        approve: { type: boolean }
+    ActionResolution:
+      type: object
+      required: [action, message, navigateTo]
+      properties:
+        action: { $ref: "#/components/schemas/AssistantAction" }
+        message: { type: string }
+        navigateTo: { type: ["string", "null"] }
+    ConversationDetail:
+      allOf:
+        - { $ref: "#/components/schemas/Conversation" }
+        - type: object
+          required: [messages]
+          properties:
+            contextNotice: { type: ["string", "null"] }
+            messages:
+              type: array
+              items: { $ref: "#/components/schemas/Message" }
+    AssistantId:
+      type: string
+      enum: [atlas, mira, nova, vex, luna, orion]
+    SettingsInput:
+      type: object
+      required: [model]
+      properties:
+        apiKey: { type: string, minLength: 10, maxLength: 500 }
+        model: { type: string, minLength: 1, maxLength: 100 }
+        name: { type: string, maxLength: 60 }
+    Settings:
+      type: object
+      required: [hasKey, model, name, connected, verifiedAt]
+      properties:
+        hasKey: { type: boolean }
+        model: { type: string }
+        name: { type: string }
+        connected: { type: boolean }
+        verifiedAt: { type: ["string", "null"] }
+    AtlasState:
+      type: object
+      required: [items, conversations, settings, summary]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/AtlasItem" }
+        conversations:
+          type: array
+          items: { $ref: "#/components/schemas/Conversation" }
+        settings: { $ref: "#/components/schemas/Settings" }
+        summary:
+          type: object
+          required: [pendingTasks, completedTasks, eventsToday, memories]
+          properties:
+            pendingTasks: { type: integer }
+            completedTasks: { type: integer }
+            eventsToday: { type: integer }
+            memories: { type: integer }
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+

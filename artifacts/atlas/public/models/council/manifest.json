@@ -1,0 +1,83 @@
+{
+  "note": "Real Meshy static models. Error-bounded web derivatives; original uploaded archive preserved. No body animation.",
+  "models": [
+    {
+      "id": "atlas",
+      "source": "Meshy_AI_AtlasAICouncilLeader_1007121950_image-to-3d-texture.glb",
+      "sourceBytes": 67260376,
+      "sourceSha256": "ae8f7f1246ec4c24661d114f95c6c99355d9791666f2105781826076a8179b2a",
+      "file": "ATLAS.glb",
+      "bytes": 3505480,
+      "sha256": "4b284f81f4559100ed4f4fb6738df25ba02713994d3ab83a59bbf91cb23a5716",
+      "sourceTriangles": 1583996,
+      "triangles": 79998,
+      "skins": 0,
+      "animations": []
+    },
+    {
+      "id": "mira",
+      "source": "Meshy_AI_mira_cyber_gothic_adv_1007130704_image-to-3d-texture.glb",
+      "sourceBytes": 76750180,
+      "sourceSha256": "c63c2cfe0e2c3e0ead2d2d518044cf6e2a20d98364219422a29aae3b28ddaca5",
+      "file": "MIRA.glb",
+      "bytes": 3620860,
+      "sha256": "d7cc1fc3086e70956789aa8cf67cefe8be0b9595f5150156c6fd5fbdf2b0bad6",
+      "sourceTriangles": 2013458,
+      "triangles": 79982,
+      "skins": 0,
+      "animations": []
+    },
+    {
+      "id": "nova",
+      "source": "Meshy_AI_Nova_Cyber_Gothic_Cha_1008090759_image-to-3d-texture.glb",
+      "sourceBytes": 73353408,
+      "sourceSha256": "d0fd1c1bcfe2b1f726666d37a8f008334da037c1a579472e59de2f187b978746",
+      "file": "NOVA.glb",
+      "bytes": 3740520,
+      "sha256": "6af670bce36d095478c4a4130a6ac263539226733ab3c5df189e6536be9fb583",
+      "sourceTriangles": 1653174,
+      "triangles": 79982,
+      "skins": 0,
+      "animations": []
+    },
+    {
+      "id": "vex",
+      "source": "Meshy_AI_Vex_Humanoid_Model_1007145831_image-to-3d-texture.glb",
+      "sourceBytes": 60927448,
+      "sourceSha256": "12b9c8f631ace727756a949d99f74d2f3290adcc63041df4fdff8a91cbc7eac0",
+      "file": "VEX.glb",
+      "bytes": 3518968,
+      "sha256": "d1ac36d908d98706d18e976c99742988d6c3c6d4ac59b24ca845a5967dab117f",
+      "sourceTriangles": 1340506,
+      "triangles": 79978,
+      "skins": 0,
+      "animations": []
+    },
+    {
+      "id": "luna",
+      "source": "Meshy_AI_luna_character_3d_1008064748_image-to-3d-texture.glb",
+      "sourceBytes": 54441512,
+      "sourceSha256": "4089f7a07789073e2857d2f86d992cffa284a82b1a2a994ace876e6fb0f3c712",
+      "file": "LUNA.glb",
+      "bytes": 3330564,
+      "sha256": "c126886dc8beb2d71ef6e169f8c1d49933775f19e3c85e85677519c5e3e38c08",
+      "sourceTriangles": 1194976,
+      "triangles": 79992,
+      "skins": 0,
+      "animations": []
+    },
+    {
+      "id": "orion",
+      "source": "Meshy_AI_orion_character_3d_1008065852_image-to-3d-texture.glb",
+      "sourceBytes": 60552412,
+      "sourceSha256": "d37e266b9a834c99a8d9cf5ad67b18c8f79a45d7ab959a1c0b0ca64122dc5574",
+      "file": "ORION.glb",
+      "bytes": 3479948,
+      "sha256": "0b21e754bc1127a71510c274e00eb05e2c5573edcc811cafa361343a339dc956",
+      "sourceTriangles": 1311260,
+      "triangles": 79988,
+      "skins": 0,
+      "animations": []
+    }
+  ]
+}

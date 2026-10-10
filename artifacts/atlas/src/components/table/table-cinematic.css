@@ -1,0 +1,40 @@
+.cc-stage{background:#05070d;container-type:size;overflow:hidden}
+.cc-pan{scrollbar-width:none;overscroll-behavior-x:contain}
+.cc-pan::-webkit-scrollbar{display:none}
+.cc-canvas{position:relative;flex:none;height:100cqh;width:calc(100cqh*1.5);margin:0 auto}
+@media (min-width:1100px){.cc-canvas{width:min(100cqw,calc(100cqh*1.5));height:min(100cqh,calc(100cqw/1.5));margin:auto}.cc-pan{align-items:center}}
+.cc-layer{position:absolute;inset:0;pointer-events:none}
+.cc-master{animation:cc-backdrop-drift 26s ease-in-out infinite alternate}
+.cc-title-layer{animation:cc-ui-drift 22s ease-in-out infinite alternate}
+.cc-asset-note{position:absolute;left:50%;top:31%;z-index:10;transform:translateX(-50%);max-width:95%;width:max-content;border:1px solid #fcd34d66;background:#000b;border-radius:8px;padding:8px 12px;text-align:center;font-size:12px;color:#fef3c7}
+.cc-footer{position:absolute;inset:0;pointer-events:none}
+.cc-footer-wave{bottom:calc(max(10%,92px) + 58px)}
+.cc-footer-controls{bottom:max(10%,92px);pointer-events:auto}
+@media (min-width:1100px){.cc-footer{inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:min(100cqw,calc(100cqh*1.5));height:min(100cqh,calc(100cqw/1.5))}.cc-footer-wave{bottom:12%}.cc-footer-controls{bottom:2%}}
+.cc-fallback{background:radial-gradient(80% 60% at 50% 40%,#0c1a2c,#05070d)}
+.cc-haze{background:radial-gradient(50% 30% at 50% 35%,hsl(195 100% 60%/.10),transparent 70%);animation:cc-drift 14s ease-in-out infinite alternate}
+.cc-core{background:radial-gradient(14% 10% at 50% 62%,hsl(190 100% 80%/.22),transparent 70%);animation:cc-pulse 5s ease-in-out infinite,cc-core-drift 18s ease-in-out infinite alternate}
+.cc-dim{transition:opacity .5s;background:rgba(2,4,10,.5)}
+.cc-glow{transition:opacity .5s;border-radius:50%;filter:blur(10px);pointer-events:none;background:radial-gradient(ellipse at center,transparent 46%,color-mix(in srgb,var(--c) 24%,transparent) 69%,transparent 76%)}
+.cc-cadence{position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 24px color-mix(in srgb,var(--c) 35%,transparent);animation:cc-flash .38s ease-out both}
+.cc-hit{position:absolute;transform:translate(-50%,-50%);background:transparent;border-radius:1.5rem;cursor:pointer}
+.cc-hit:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+.cc-name{position:absolute;transform:translate(-50%,-50%);pointer-events:none;text-align:center;white-space:nowrap;padding:4px 12px;border-radius:10px;background:rgba(4,8,16,.82);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.cc-ring{animation:cc-rimlight 5s ease-in-out infinite}
+.cc-ring[data-s='speaking']{animation-duration:.8s}
+.cc-ring[data-s='listening']{animation-duration:3s}
+.cc-wave rect{transform-box:fill-box;transform-origin:50% 50%;transform:scaleY(.12)}
+.cc-wave[data-state='speaking'] rect{animation:cc-bar .9s ease-in-out infinite}
+.cc-wave[data-state='listening'] rect{animation:cc-bar 2.4s ease-in-out infinite}
+.cc-wave[data-state='thinking'] rect{animation:cc-bar 1.6s ease-in-out infinite;transform:scaleY(.18)}
+.cc-ctl{transition:transform .2s,background .2s}.cc-ctl:hover{transform:translateY(-2px)}
+.holo-panel{border:1px solid hsl(190 90% 70%/.18);background:linear-gradient(180deg,hsl(205 60% 14%/.55),hsl(222 58% 6%/.8));box-shadow:inset 0 0 30px hsl(190 100% 60%/.05)}
+@keyframes cc-pulse{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes cc-rimlight{0%,100%{opacity:.35}50%{opacity:.65}}
+@keyframes cc-flash{from{opacity:.7}to{opacity:0}}
+@keyframes cc-drift{from{transform:translateX(-1.5%)}to{transform:translateX(1.5%)}}
+@keyframes cc-backdrop-drift{from{transform:translate3d(-1px,0,0)}to{transform:translate3d(1px,-1px,0)}}
+@keyframes cc-core-drift{from{transform:translate3d(2px,0,0)}to{transform:translate3d(-2px,1px,0)}}
+@keyframes cc-ui-drift{from{margin-top:0}to{margin-top:1px}}
+@keyframes cc-bar{0%,100%{transform:scaleY(.15)}50%{transform:scaleY(1)}}
+@media (prefers-reduced-motion:reduce){.cc-master,.cc-title-layer,.cc-haze,.cc-core,.cc-ring,.cc-wave rect,.cc-ctl,.cc-dim,.cc-glow,.cc-cadence{animation:none!important;transition:none!important}}
