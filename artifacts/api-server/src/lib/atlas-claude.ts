@@ -59,7 +59,7 @@ export async function claude(data: WorkspaceData, encryptedKey: string | null, m
   try {
     response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "content-type": "application/json", "Authorization": `Bearer ${key}`, "anthropic-version": "2023-06-01" },
+      headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
       body: JSON.stringify(verify ? {
         model: CLAUDE_MODEL,
         max_tokens: 64,

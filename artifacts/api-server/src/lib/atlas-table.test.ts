@@ -50,7 +50,7 @@ test("each real Messages payload selects its persona and scopes business notes",
   globalThis.fetch = async (_url, init) => {
     const body = JSON.parse(init!.body as string);
     assert.equal(body.model, "claude-sonnet-5-5");
-    assert.equal(new Headers(init!.headers).get("Authorization"), `Bearer ${fakeKey}`);
+    assert.equal(new Headers(init!.headers).get("x-api-key"), fakeKey);
     assert.match(body.system, new RegExp(PERSONAS[chosen as typeof ASSISTANT_IDS[number]].name));
     const context = JSON.parse(body.system.split("İzinli kullanıcı bağlamı: ")[1]);
     assert.ok(context.some((i:any) => i.domain === "personal"));

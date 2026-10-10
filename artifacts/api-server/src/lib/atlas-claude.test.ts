@@ -34,13 +34,13 @@ test('provider errors are classified, retain safe messages and never echo keys',
   }
 });
 
-test('minimal check sends only required Messages fields with Bearer authentication', async () => {
+test('minimal check sends only required Messages fields with x-api-key authentication', async () => {
   globalThis.fetch = async (input, init) => {
     assert.equal(input, 'https://api.anthropic.com/v1/messages');
     const body = JSON.parse(init!.body as string);
     assert.deepEqual(body, { model: 'claude-sonnet-5-5', max_tokens: 64, messages: [{ role: 'user', content: 'Merhaba.' }] });
-    assert.equal(new Headers(init!.headers).get('Authorization'), `Bearer ${fakeKey}`);
-    assert.equal(new Headers(init!.headers).get('x-api-key'), null);
+    assert.equal(new Headers(init!.headers).get('x-api-key'), fakeKey);
+    assert.equal(new Headers(init!.headers).get('Authorization'), null);
     return new Response(JSON.stringify({ type: 'message', id: 'msg_test', role: 'assistant', content: [{ type: 'text', text: 'Bağlantı başarılı' }], stop_reason: 'end_turn' }));
   };
   assert.equal((await claude(data, encrypted, [{ role: 'user', content: 'Merhaba' }], true)).text, 'Bağlantı başarılı');
@@ -78,7 +78,7 @@ test('long histories and note contexts keep whole content and show a limit notic
   globalThis.fetch = async (_input, init) => {
     const body = JSON.parse(init!.body as string);
     assert.equal(body.model, 'claude-sonnet-5-5');
-    assert.equal(new Headers(init!.headers).get('Authorization'), `Bearer ${fakeKey}`);
+    assert.equal(new Headers(init!.headers).get('x-api-key'), fakeKey);
     for (const field of ['thinking', 'tool_choice', 'temperature', 'top_p', 'top_k']) assert.ok(!(field in body));
     assert.ok(body.messages.length <= 120);
     assert.equal(body.messages[0].role, 'user');
@@ -113,7 +113,7 @@ test('chat persistence, independent writes, concurrency and key removal race', a
     await request('/settings', 'PUT', { model: 'claude-sonnet-5-5', apiKey: fakeKey });
     assert.equal((await request('/settings', 'PUT', { model: 'claude-other' })).body.code, 'model_fixed');
     globalThis.fetch = async (_input, init) => {
-      assert.equal(new Headers(init!.headers).get('Authorization'), `Bearer ${fakeKey}`);
+      assert.equal(new Headers(init!.headers).get('x-api-key'), fakeKey);
       assert.deepEqual(JSON.parse(init!.body as string), { model: 'claude-sonnet-5-5', max_tokens: 64, messages: [{ role: 'user', content: 'Merhaba.' }] });
       return new Response(JSON.stringify({ type: 'message', id: 'msg_verify', role: 'assistant', content: [{ type: 'thinking' }], stop_reason: 'max_tokens' }));
     };
