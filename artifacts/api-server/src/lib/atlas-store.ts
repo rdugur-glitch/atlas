@@ -61,6 +61,18 @@ export function sameOrigin(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+export const GUEST_CREATIONS_PER_HOUR = 20;
+const guestCreations = new Map<string, { count: number; resetAt: number }>();
+/** Per-IP budget for new guest workspaces (process-local, like the AI request limit). */
+export function allowGuestCreation(ip: string, time = Date.now(), store = guestCreations) {
+  for (const [key, entry] of store) if (entry.resetAt < time) store.delete(key);
+  const entry = store.get(ip) || { count: 0, resetAt: time + 3600000 };
+  if (entry.count >= GUEST_CREATIONS_PER_HOUR) return false;
+  entry.count++;
+  store.set(ip, entry);
+  return true;
+}
+
 export async function anonymousWorkspace(req: Request, res: Response, next: NextFunction) {
   const cookie = req.cookies?.atlas_workspace;
   let token = typeof cookie === "string" && /^[a-f0-9]{64}$/.test(cookie) ? cookie : null;
@@ -76,6 +88,18 @@ export async function anonymousWorkspace(req: Request, res: Response, next: Next
   }
 
   if (!workspaceId) {
+    // Reads never create rows: a guest without a workspace sees the empty initial
+    // state, and the first write opens the workspace and sets its cookie.
+    if (req.method === "GET" || req.method === "HEAD") {
+      res.locals.workspaceId = null;
+      next();
+      return;
+    }
+    if (!allowGuestCreation(req.ip ?? "unknown")) {
+      res.setHeader("Retry-After", "3600");
+      res.status(429).json({ error: "Bu bağlantıdan çok fazla misafir alanı açıldı. Bir süre sonra yeniden deneyin veya hesabınıza giriş yapın.", code: "rate_limit", retryAfter: 3600 });
+      return;
+    }
     for (let attempt = 0; attempt < 3 && !workspaceId; attempt++) {
       token = randomBytes(32).toString("hex");
       const candidateId = createHash("sha256").update(token).digest("hex");
@@ -107,7 +131,9 @@ function currentModel(data: WorkspaceData) {
   }
   return data;
 }
-export async function readWorkspace(id: string) {
+export async function readWorkspace(id: string | null) {
+  // A guest who has not written anything yet has no row; serve the empty state.
+  if (id === null) return { data: initial(), encryptedKey: null };
   const result = await pool.query("SELECT data, encrypted_key FROM atlas_workspaces WHERE id=$1", [id]);
   if (!result.rows[0]) throw new AtlasFailure("Kişisel alan bulunamadı.", 404);
   return { data: currentModel(result.rows[0].data as WorkspaceData), encryptedKey: result.rows[0].encrypted_key as string | null };
