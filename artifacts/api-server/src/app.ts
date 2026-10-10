@@ -2,6 +2,7 @@ import express, { type Express } from "express";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
 import router from "./routes";
+import healthRouter from "./routes/health";
 import { logger } from "./lib/logger";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -33,6 +34,8 @@ app.use(
     },
   }),
 );
+// Liveness must not depend on Clerk: mount before the proxy and auth middleware.
+app.use("/api", healthRouter);
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 app.use(cookieParser());
 app.use(express.json({ limit: "64kb" }));
