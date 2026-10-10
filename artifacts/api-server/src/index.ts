@@ -2,6 +2,9 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { pool } from "@workspace/db";
 import { ensureAccountSchema } from "./lib/atlas-account";
+import { assertProductionConfig } from "./lib/startup-config";
+
+assertProductionConfig();
 
 const rawPort = process.env["PORT"];
 

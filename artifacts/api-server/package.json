@@ -8,7 +8,7 @@
     "build": "node ./build.mjs",
     "start": "NODE_ENV=production exec node ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:atlas": "esbuild src/lib/atlas-claude.test.ts src/lib/atlas-actions.test.ts src/lib/atlas-account.test.ts src/lib/atlas-table.test.ts ../../tests/atlas-voice-engine.test.ts --bundle --platform=node --format=esm --entry-names='[name]' --banner:js='import {createRequire} from \"node:module\"; const require = createRequire(import.meta.url);' --outdir=./tmp --out-extension:.js=.mjs && NODE_ENV=production LOG_LEVEL=silent node --test ./tmp/*.test.mjs"
+    "test:atlas": "esbuild src/lib/atlas-claude.test.ts src/lib/atlas-actions.test.ts src/lib/atlas-account.test.ts src/lib/atlas-table.test.ts src/lib/atlas-startup.test.ts ../../tests/atlas-voice-engine.test.ts --bundle --platform=node --format=esm --entry-names='[name]' --banner:js='import {createRequire} from \"node:module\"; const require = createRequire(import.meta.url);' --outdir=./tmp --out-extension:.js=.mjs && NODE_ENV=production LOG_LEVEL=silent node --test ./tmp/*.test.mjs"
   },
   "dependencies": {
     "@clerk/express": "^2.1.76",

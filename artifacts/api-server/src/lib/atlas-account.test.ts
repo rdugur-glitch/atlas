@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID, randomBytes, createHash } from "node:crypto";
 import { createServer } from "node:http";
 import { pool } from "@workspace/db";
-import { initial, encrypt } from "./atlas-store";
+import { initial, encrypt, allowGuestCreation, GUEST_CREATIONS_PER_HOUR } from "./atlas-store";
 import { mergeProfile } from "./atlas-account-merge";
 import { ensureAccountSchema, ensureProfile, profileId, importLegacy, accountStatus, legacyId } from "./atlas-account";
 import { testApp } from "./atlas-test-app";
@@ -102,7 +102,7 @@ test("two devices share profile; another authenticated account cannot read/write
       if(process.env.NODE_ENV==="production")assert.match(cookie,/Secure/i);
       jar[user]=cookie.split(";")[0]!;
     }
-    if(user==="anonymous"&&path==="/state"&&res.status===200&&!jar.anonymous) {
+    if(user==="anonymous"&&res.headers.get("set-cookie")&&!jar.anonymous) {
       const cookie=res.headers.get("set-cookie")!;
       assert.match(cookie,/HttpOnly/i);assert.match(cookie,/SameSite=Lax/i);
       if(process.env.NODE_ENV==="production")assert.match(cookie,/Secure/i);
@@ -113,6 +113,7 @@ test("two devices share profile; another authenticated account cannot read/write
   };
   try {
     assert.equal((await request("anonymous","/state")).status,200);
+    assert.equal(jar.anonymous,undefined); // Guest reads never open a workspace.
     assert.equal((await request(a,"/state")).status,401); // No HttpOnly binding yet.
     await request(a,"/account"); await request(b,"/account");
     const created=await request(a,"/items","POST",{kind:"task",title:"Yalnızca A"});
@@ -150,15 +151,22 @@ test("guest data stays cookie-owned until its owner explicitly imports it into a
   const headers=(user:string,cookie="")=>({"x-fixture-user":user,cookie});
   let guestId:string|null=null;
   try {
+    const rowsBefore=Number((await pool.query("SELECT count(*) FROM atlas_workspaces")).rows[0].count);
     const guestState=await fetch(base+"/state",{headers:headers("anonymous")});
     assert.equal(guestState.status,200);
-    const workspaceCookie=guestState.headers.get("set-cookie")!.match(/atlas_workspace=[^;]+/)![0]!;
-    assert.match(guestState.headers.get("set-cookie")!,/HttpOnly/i);
-    if(process.env.NODE_ENV==="production")assert.match(guestState.headers.get("set-cookie")!,/Secure/i);
+    assert.equal(guestState.headers.get("set-cookie"),null);
+    assert.equal((await guestState.json() as any).items.length,0);
+    assert.equal((await fetch(base+"/conversations/00000000-0000-4000-8000-000000000000",{headers:headers("anonymous")})).status,404);
+    assert.equal(Number((await pool.query("SELECT count(*) FROM atlas_workspaces")).rows[0].count),rowsBefore);
+    // The first write opens the guest workspace and issues its cookie.
+    const guestTask=await fetch(base+"/items",{method:"POST",headers:{...headers("anonymous"),"content-type":"application/json"},body:JSON.stringify({kind:"task",title:"Cookie ile korunan görev"})});
+    assert.equal(guestTask.status,200);
+    const workspaceCookie=guestTask.headers.get("set-cookie")!.match(/atlas_workspace=[^;]+/)![0]!;
+    assert.match(guestTask.headers.get("set-cookie")!,/HttpOnly/i);
+    if(process.env.NODE_ENV==="production")assert.match(guestTask.headers.get("set-cookie")!,/Secure/i);
     const token=workspaceCookie.split("=")[1]!;
     guestId=createHash("sha256").update(token).digest("hex");
-    const guestTask=await fetch(base+"/items",{method:"POST",headers:{...headers("anonymous",workspaceCookie),"content-type":"application/json"},body:JSON.stringify({kind:"task",title:"Cookie ile korunan görev"})});
-    assert.equal(guestTask.status,200);
+    assert.equal((await fetch(base+"/state",{headers:headers("anonymous",workspaceCookie)}).then(r=>r.json()) as any).items[0].title,"Cookie ile korunan görev");
     const savedKey=await fetch(base+"/settings",{method:"PUT",headers:{...headers("anonymous",workspaceCookie),"content-type":"application/json"},body:JSON.stringify({model:"claude-sonnet-5-5",name:"Misafir",apiKey:"synthetic-guest-key"})});
     assert.equal(savedKey.status,200);
     const before=(await pool.query("SELECT data,encrypted_key FROM atlas_workspaces WHERE id=$1",[guestId])).rows[0];
@@ -197,4 +205,13 @@ test("guest data stays cookie-owned until its owner explicitly imports it into a
     await pool.query("DELETE FROM atlas_workspaces WHERE user_id=ANY($1::text[])",[[owner,other]]);
     if(guestId) await pool.query("DELETE FROM atlas_workspaces WHERE id=$1",[guestId]);
   }
+});
+
+test("guest workspace creation is budgeted per IP and the budget resets after an hour",()=>{
+  const store=new Map<string,{count:number;resetAt:number}>();
+  const start=1_000_000;
+  for(let i=0;i<GUEST_CREATIONS_PER_HOUR;i++) assert.equal(allowGuestCreation("203.0.113.7",start,store),true);
+  assert.equal(allowGuestCreation("203.0.113.7",start+1000,store),false);
+  assert.equal(allowGuestCreation("198.51.100.9",start+1000,store),true); // Other clients are unaffected.
+  assert.equal(allowGuestCreation("203.0.113.7",start+3600001,store),true);
 });
